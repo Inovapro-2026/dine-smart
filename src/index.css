@@ -46,6 +46,12 @@
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
 
+    /* Admin blue theme */
+    --admin-primary: 217 91% 60%;
+    --admin-secondary: 221 83% 53%;
+    --admin-accent: 199 89% 48%;
+    --admin-glow: 217 91% 70%;
+
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 0 0% 9%;
@@ -192,6 +198,197 @@
   /* Order card */
   .order-card {
     @apply bg-card rounded-xl p-4 border border-border hover:border-primary/30 transition-colors;
+  }
+
+  /* Admin animated background */
+  .admin-bg-animated {
+    background: linear-gradient(135deg, 
+      hsl(var(--admin-primary) / 0.1) 0%, 
+      hsl(var(--admin-secondary) / 0.05) 50%, 
+      hsl(var(--admin-accent) / 0.1) 100%
+    );
+    position: relative;
+    overflow: hidden;
+  }
+
+  .admin-bg-animated::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      ellipse at center,
+      hsl(var(--admin-primary) / 0.15) 0%,
+      transparent 50%
+    );
+    animation: admin-glow-rotate 15s linear infinite;
+  }
+
+  .admin-bg-animated::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, hsl(var(--admin-accent) / 0.1) 0%, transparent 40%),
+      radial-gradient(circle at 80% 20%, hsl(var(--admin-secondary) / 0.08) 0%, transparent 40%);
+    animation: admin-pulse 4s ease-in-out infinite alternate;
+  }
+
+  @keyframes admin-glow-rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes admin-pulse {
+    0% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  /* Stat card glow */
+  .stat-card {
+    @apply relative overflow-hidden bg-card/80 backdrop-blur-sm rounded-2xl border border-border/50 p-4 sm:p-5;
+    transition: all 0.3s ease;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, 
+      hsl(var(--admin-primary)) 0%, 
+      hsl(var(--admin-accent)) 50%,
+      hsl(var(--admin-secondary)) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .stat-card:hover::before {
+    opacity: 1;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px -10px hsl(var(--admin-primary) / 0.3);
+  }
+
+  /* Order card enhanced */
+  .order-card-enhanced {
+    @apply relative bg-card/90 backdrop-blur-sm rounded-2xl border border-border/50 overflow-hidden;
+    transition: all 0.3s ease;
+  }
+
+  .order-card-enhanced:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 20px 40px -15px hsl(var(--admin-primary) / 0.2);
+    border-color: hsl(var(--admin-primary) / 0.3);
+  }
+
+  /* Animated status indicator */
+  .status-indicator {
+    @apply relative flex items-center justify-center;
+  }
+
+  .status-indicator::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.3;
+    animation: status-pulse 2s ease-out infinite;
+  }
+
+  @keyframes status-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.3;
+    }
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, 
+      hsl(var(--admin-primary)) 0%, 
+      hsl(var(--admin-accent)) 50%,
+      hsl(var(--admin-secondary)) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Tab indicator glow */
+  .tab-glow {
+    @apply relative;
+  }
+
+  .tab-glow[data-state="active"]::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background: linear-gradient(90deg, 
+      hsl(var(--admin-primary)), 
+      hsl(var(--admin-accent))
+    );
+    border-radius: 3px;
+    animation: tab-glow-appear 0.3s ease-out;
+  }
+
+  @keyframes tab-glow-appear {
+    0% {
+      transform: scaleX(0);
+      opacity: 0;
+    }
+    100% {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+  }
+
+  /* Floating particles */
+  .floating-particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: hsl(var(--admin-primary) / 0.3);
+    animation: float-particle 6s ease-in-out infinite;
+  }
+
+  @keyframes float-particle {
+    0%, 100% {
+      transform: translateY(0) translateX(0);
+      opacity: 0.3;
+    }
+    50% {
+      transform: translateY(-20px) translateX(10px);
+      opacity: 0.6;
+    }
   }
 }
 
