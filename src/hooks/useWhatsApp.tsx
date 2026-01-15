@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-
-const WHATSAPP_API_BASE = 'http://148.230.76.60:3334';
+import { supabase } from '@/integrations/supabase/client';
 
 interface WhatsAppStatus {
   connected: boolean;
@@ -14,10 +13,12 @@ export function useWhatsApp() {
 
   const checkStatus = async (): Promise<WhatsAppStatus> => {
     try {
-      const response = await fetch(`${WHATSAPP_API_BASE}/status`);
-      const data = await response.json();
-      // API retorna { status: "open" } ou { status: "close" }
-      const connected = data.status === 'open';
+      const { data, error } = await supabase.functions.invoke('whatsapp-proxy', {
+        body: { action: 'status' },
+      });
+      if (error) throw error;
+
+      const connected = data?.status === 'open';
       setIsConnected(connected);
       return { connected };
     } catch (error) {
@@ -30,21 +31,19 @@ export function useWhatsApp() {
   const generateQRCode = async (): Promise<string | null> => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${WHATSAPP_API_BASE}/qr`);
-      // API retorna HTML <img> com base64
-      const htmlText = await response.text();
-      
-      // Extrair src do base64 da tag img
-      const srcMatch = htmlText.match(/src="([^"]+)"/);
-      if (srcMatch && srcMatch[1]) {
-        const base64Src = srcMatch[1];
-        setQrCode(base64Src);
-        return base64Src;
+      const { data, error } = await supabase.functions.invoke('whatsapp-proxy', {
+        body: { action: 'qr' },
+      });
+      if (error) throw error;
+
+      const qr = data?.qr ?? null;
+      if (qr) {
+        setQrCode(qr);
+        return qr;
       }
-      
-      // Se não conseguir extrair, retorna o texto completo
-      setQrCode(htmlText);
-      return htmlText;
+
+      toast.error('QR Code não retornou no formato esperado.');
+      return null;
     } catch (error) {
       console.error('Error generating QR code:', error);
       toast.error('Erro ao gerar QR Code. Verifique a conexão com o servidor.');
@@ -62,26 +61,12 @@ export function useWhatsApp() {
         formattedNumber = '55' + formattedNumber;
       }
 
-      const response = await fetch(`${WHATSAPP_API_BASE}/send`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          number: formattedNumber,
-          message,
-        }),
+      const { data, error } = await supabase.functions.invoke('whatsapp-proxy', {
+        body: { action: 'send', number: formattedNumber, message },
       });
+      if (error) throw error;
 
-      const data = await response.json();
-      
-      // API retorna { status: "success", message: "Mensagem enviada!" }
-      if (data.status === 'success') {
-        return true;
-      }
-      
-      console.error('WhatsApp send error:', data);
-      return false;
+      return data?.status === 'success';
     } catch (error) {
       console.error('Error sending WhatsApp message:', error);
       return false;
