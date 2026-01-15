@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useWhatsApp } from '@/hooks/useWhatsApp';
+import { useStoreSettings } from '@/hooks/useStoreSettings';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,26 +24,41 @@ import {
   Send,
   Settings,
   Loader2,
+  Save,
+  CheckCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminWhatsApp() {
   const { isConnected, qrCode, isLoading, checkStatus, generateQRCode, sendMessage } = useWhatsApp();
+  const { settings, isLoading: isLoadingSettings, updateSettings, isSaving } = useStoreSettings();
+  
   const [isChecking, setIsChecking] = useState(false);
   const [testNumber, setTestNumber] = useState('');
   const [testMessage, setTestMessage] = useState('🧪 Teste de mensagem do INOVAFOOD!');
   const [isSending, setIsSending] = useState(false);
-
   const [isQrOpen, setIsQrOpen] = useState(false);
 
   const [messages, setMessages] = useState({
-    welcome:
-      '👋 Bem-vindo ao INOVAFOOD!\nEscolha uma opção abaixo 👇\n\n1️⃣ Ver cardápio\n2️⃣ Falar com atendente\n3️⃣ Ver meu pedido\n4️⃣ Horário de funcionamento',
-    preparing: '🍳 Seu pedido está sendo preparado!',
-    ready: '✅ Seu pedido está pronto para retirada!',
-    delivery: '🛵 Seu pedido saiu para entrega!',
-    completed: '🎉 Pedido entregue! Obrigado pela preferência!',
+    welcome: '',
+    preparing: '',
+    ready: '',
+    delivery: '',
+    completed: '',
   });
+
+  // Sync local state with settings from database
+  useEffect(() => {
+    if (!isLoadingSettings && settings) {
+      setMessages({
+        welcome: settings.whatsapp_welcome_message,
+        preparing: settings.whatsapp_preparing_message,
+        ready: settings.whatsapp_ready_message,
+        delivery: settings.whatsapp_delivery_message,
+        completed: settings.whatsapp_completed_message,
+      });
+    }
+  }, [settings, isLoadingSettings]);
 
   useEffect(() => {
     handleCheckStatus();
@@ -77,6 +93,16 @@ export default function AdminWhatsApp() {
     } else {
       toast.error('Erro ao enviar mensagem. Verifique a conexão.');
     }
+  };
+
+  const handleSaveMessages = async () => {
+    await updateSettings({
+      whatsapp_welcome_message: messages.welcome,
+      whatsapp_preparing_message: messages.preparing,
+      whatsapp_ready_message: messages.ready,
+      whatsapp_delivery_message: messages.delivery,
+      whatsapp_completed_message: messages.completed,
+    });
   };
 
   return (
@@ -246,13 +272,16 @@ export default function AdminWhatsApp() {
             Mensagens Automáticas
           </CardTitle>
           <CardDescription className="text-xs sm:text-sm">
-            Configure as mensagens enviadas em cada etapa do pedido
+            Configure as mensagens enviadas em cada etapa do pedido. Clique em "Salvar" para aplicar as alterações.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="msgWelcome" className="text-xs sm:text-sm">Mensagem de Boas-vindas</Label>
+              <Label htmlFor="msgWelcome" className="text-xs sm:text-sm flex items-center gap-2">
+                Mensagem de Boas-vindas
+                <Badge variant="outline" className="text-[10px]">Webhook</Badge>
+              </Label>
               <Textarea
                 id="msgWelcome"
                 value={messages.welcome}
@@ -260,10 +289,16 @@ export default function AdminWhatsApp() {
                 rows={4}
                 className="text-sm"
               />
+              <p className="text-[10px] text-muted-foreground">
+                Enviada quando cliente manda primeira mensagem (requer webhook na API ISA)
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="msgPreparing" className="text-xs sm:text-sm">Pedido em Preparo</Label>
+              <Label htmlFor="msgPreparing" className="text-xs sm:text-sm flex items-center gap-2">
+                Pedido em Preparo
+                <CheckCircle className="h-3 w-3 text-success" />
+              </Label>
               <Textarea
                 id="msgPreparing"
                 value={messages.preparing}
@@ -274,7 +309,10 @@ export default function AdminWhatsApp() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="msgReady" className="text-xs sm:text-sm">Pronto para Retirada</Label>
+              <Label htmlFor="msgReady" className="text-xs sm:text-sm flex items-center gap-2">
+                Pronto para Retirada
+                <CheckCircle className="h-3 w-3 text-success" />
+              </Label>
               <Textarea
                 id="msgReady"
                 value={messages.ready}
@@ -285,7 +323,10 @@ export default function AdminWhatsApp() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="msgDelivery" className="text-xs sm:text-sm">Saiu para Entrega</Label>
+              <Label htmlFor="msgDelivery" className="text-xs sm:text-sm flex items-center gap-2">
+                Saiu para Entrega
+                <CheckCircle className="h-3 w-3 text-success" />
+              </Label>
               <Textarea
                 id="msgDelivery"
                 value={messages.delivery}
@@ -297,7 +338,10 @@ export default function AdminWhatsApp() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="msgCompleted" className="text-xs sm:text-sm">Pedido Concluído</Label>
+            <Label htmlFor="msgCompleted" className="text-xs sm:text-sm flex items-center gap-2">
+              Pedido Concluído
+              <CheckCircle className="h-3 w-3 text-success" />
+            </Label>
             <Textarea
               id="msgCompleted"
               value={messages.completed}
@@ -307,9 +351,38 @@ export default function AdminWhatsApp() {
             />
           </div>
 
-          <Button className="w-full sm:w-auto text-sm sm:text-base">
+          <Button 
+            className="w-full sm:w-auto text-sm sm:text-base" 
+            onClick={handleSaveMessages}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
             Salvar Configurações
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Info sobre webhook */}
+      <Card className="border-dashed">
+        <CardContent className="pt-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <MessageSquare className="h-4 w-4 text-primary" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Sobre mensagens automáticas</p>
+              <p className="text-xs text-muted-foreground">
+                <strong>Mensagens de status</strong> (Preparo, Pronto, Entrega, Concluído) são enviadas automaticamente quando você avança o pedido no painel.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                <strong>Mensagem de boas-vindas</strong> precisa que sua API ISA/Baileys tenha webhook configurado para receber mensagens e chamar nosso endpoint.
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

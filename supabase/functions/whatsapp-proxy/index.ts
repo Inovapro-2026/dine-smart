@@ -1,6 +1,8 @@
 // Supabase Edge Function: WhatsApp proxy (avoids CORS/mixed-content)
 // External API: ISA (Baileys)
 
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -8,12 +10,16 @@ const corsHeaders = {
 
 const API_BASE = 'http://148.230.76.60:3333';
 
-type Action = 'status' | 'qr' | 'send';
+type Action = 'status' | 'qr' | 'send' | 'webhook';
 
 type RequestBody = {
   action: Action;
   number?: string;
   message?: string;
+  // Webhook payload from ISA
+  from?: string;
+  text?: string;
+  isFirstMessage?: boolean;
 };
 
 function json(data: unknown, status = 200) {
@@ -39,6 +45,43 @@ function extractQrSrc(html: string): string | null {
   }
 
   return null;
+}
+
+async function sendWhatsAppMessage(number: string, message: string): Promise<boolean> {
+  try {
+    const r = await fetch(`${API_BASE}/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ number, message }),
+    });
+    return r.ok;
+  } catch (e) {
+    console.error('Error sending message:', e);
+    return false;
+  }
+}
+
+async function getWelcomeMessage(): Promise<string> {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data } = await supabase
+      .from('store_settings')
+      .select('whatsapp_welcome_message')
+      .limit(1)
+      .maybeSingle();
+
+    if (data?.whatsapp_welcome_message) {
+      return data.whatsapp_welcome_message;
+    }
+  } catch (e) {
+    console.error('Error fetching welcome message:', e);
+  }
+
+  // Default welcome message
+  return '👋 Bem-vindo ao INOVAFOOD!\nEscolha uma opção abaixo 👇\n\n1️⃣ Ver cardápio\n2️⃣ Falar com atendente\n3️⃣ Ver meu pedido\n4️⃣ Horário de funcionamento';
 }
 
 Deno.serve(async (req) => {
@@ -76,6 +119,36 @@ Deno.serve(async (req) => {
 
       const data = await r.json().catch(() => ({}));
       return json(data, r.ok ? 200 : 400);
+    }
+
+    // Webhook: called by ISA when receiving a message
+    if (body.action === 'webhook') {
+      const from = (body.from ?? body.number ?? '').toString();
+      const text = (body.text ?? body.message ?? '').toString();
+      const isFirst = body.isFirstMessage ?? true; // Assume first message if not specified
+
+      console.log(`Webhook received from ${from}: ${text} (isFirst: ${isFirst})`);
+
+      if (!from) {
+        return json({ error: 'Missing "from" number' }, 400);
+      }
+
+      // Only send welcome message on first interaction
+      if (isFirst) {
+        const welcomeMessage = await getWelcomeMessage();
+        const sent = await sendWhatsAppMessage(from, welcomeMessage);
+        
+        console.log(`Welcome message sent to ${from}: ${sent}`);
+        
+        return json({ 
+          status: sent ? 'success' : 'failed',
+          action: 'welcome_sent',
+          to: from 
+        });
+      }
+
+      // For subsequent messages, just acknowledge
+      return json({ status: 'received', from, text });
     }
 
     return json({ error: 'Invalid action' }, 400);

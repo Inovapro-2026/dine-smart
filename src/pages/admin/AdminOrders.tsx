@@ -1,5 +1,6 @@
 import { useTodayOrders, useUpdateOrderStatus } from '@/hooks/useOrders';
 import { useWhatsApp } from '@/hooks/useWhatsApp';
+import { useStoreSettings } from '@/hooks/useStoreSettings';
 import { InovaOrder, ORDER_STATUS_LABELS, OrderStatus } from '@/types/inovafood';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,15 +30,6 @@ import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area, XAxis, YAxis
 
 const STATUS_FLOW: OrderStatus[] = ['pending', 'preparing', 'ready', 'out_for_delivery', 'completed'];
 
-const STATUS_MESSAGES: Record<OrderStatus, string> = {
-  pending: '',
-  preparing: '🍳 Seu pedido está sendo preparado!',
-  ready: '✅ Seu pedido está pronto para retirada!',
-  out_for_delivery: '🛵 Seu pedido saiu para entrega!',
-  completed: '🎉 Pedido entregue! Obrigado pela preferência!',
-  cancelled: '❌ Seu pedido foi cancelado.',
-};
-
 const STATUS_COLORS = {
   pending: '#f59e0b',
   preparing: '#3b82f6',
@@ -50,7 +42,18 @@ export default function AdminOrders() {
   const { data: orders, isLoading } = useTodayOrders();
   const updateStatus = useUpdateOrderStatus();
   const { sendMessage } = useWhatsApp();
+  const { settings } = useStoreSettings();
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
+
+  // Build status messages from saved settings
+  const statusMessages: Record<OrderStatus, string> = useMemo(() => ({
+    pending: '',
+    preparing: settings.whatsapp_preparing_message,
+    ready: settings.whatsapp_ready_message,
+    out_for_delivery: settings.whatsapp_delivery_message,
+    completed: settings.whatsapp_completed_message,
+    cancelled: '❌ Seu pedido foi cancelado.',
+  }), [settings]);
 
   const ordersByStatus = useMemo(() => ({
     pending: orders?.filter(o => o.status === 'pending') || [],
@@ -111,7 +114,7 @@ export default function AdminOrders() {
     try {
       await updateStatus.mutateAsync({ orderId: order.id, status: nextStatus });
 
-      const message = STATUS_MESSAGES[nextStatus];
+      const message = statusMessages[nextStatus];
       if (message && order.customer_phone) {
         const sent = await sendMessage(order.customer_phone, message);
         if (sent) {
