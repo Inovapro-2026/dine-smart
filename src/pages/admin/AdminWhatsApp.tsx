@@ -7,15 +7,22 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
-  MessageSquare, 
-  QrCode, 
-  Wifi, 
-  WifiOff, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  MessageSquare,
+  QrCode,
+  Wifi,
+  WifiOff,
   RefreshCw,
   Send,
   Settings,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,8 +33,11 @@ export default function AdminWhatsApp() {
   const [testMessage, setTestMessage] = useState('🧪 Teste de mensagem do INOVAFOOD!');
   const [isSending, setIsSending] = useState(false);
 
+  const [isQrOpen, setIsQrOpen] = useState(false);
+
   const [messages, setMessages] = useState({
-    welcome: '👋 Bem-vindo ao INOVAFOOD!\nEscolha uma opção abaixo 👇\n\n1️⃣ Ver cardápio\n2️⃣ Falar com atendente\n3️⃣ Ver meu pedido\n4️⃣ Horário de funcionamento',
+    welcome:
+      '👋 Bem-vindo ao INOVAFOOD!\nEscolha uma opção abaixo 👇\n\n1️⃣ Ver cardápio\n2️⃣ Falar com atendente\n3️⃣ Ver meu pedido\n4️⃣ Horário de funcionamento',
     preparing: '🍳 Seu pedido está sendo preparado!',
     ready: '✅ Seu pedido está pronto para retirada!',
     delivery: '🛵 Seu pedido saiu para entrega!',
@@ -47,6 +57,7 @@ export default function AdminWhatsApp() {
   const handleGenerateQR = async () => {
     const qr = await generateQRCode();
     if (qr) {
+      setIsQrOpen(true);
       toast.success('QR Code gerado! Escaneie com o WhatsApp.');
     }
   };
@@ -118,8 +129,8 @@ export default function AdminWhatsApp() {
 
             {/* QR Code */}
             <div className="space-y-3">
-              <Button 
-                className="w-full text-sm sm:text-base" 
+              <Button
+                className="w-full text-sm sm:text-base"
                 onClick={handleGenerateQR}
                 disabled={isLoading || isConnected}
               >
@@ -131,18 +142,42 @@ export default function AdminWhatsApp() {
                 {isConnected ? 'Já Conectado' : 'Gerar QR Code'}
               </Button>
 
-              {qrCode && !isConnected && (
-                <div className="flex flex-col items-center p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl">
-                  <img 
-                    src={qrCode}
-                    alt="QR Code WhatsApp"
-                    className="w-36 h-36 sm:w-48 sm:h-48"
-                  />
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-2 text-center">
-                    Escaneie com o WhatsApp
-                  </p>
-                </div>
+              {!isConnected && (
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Ao gerar, o QR Code abrirá em um popout para escanear no WhatsApp.
+                </p>
               )}
+
+              <Dialog open={isQrOpen && !!qrCode && !isConnected} onOpenChange={setIsQrOpen}>
+                <DialogContent className="max-w-[92vw] sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Escaneie o QR Code</DialogTitle>
+                    <DialogDescription>
+                      Abra o WhatsApp no celular → Aparelhos conectados → Conectar um aparelho.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  {qrCode ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <img
+                        src={qrCode}
+                        alt="QR Code do WhatsApp para conexão"
+                        className="w-56 h-56 sm:w-72 sm:h-72"
+                      />
+                      <Button variant="outline" onClick={handleGenerateQR} disabled={isLoading}>
+                        {isLoading ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                        )}
+                        Gerar novo QR
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Nenhum QR Code disponível.</p>
+                  )}
+                </DialogContent>
+              </Dialog>
             </div>
           </CardContent>
         </Card>
