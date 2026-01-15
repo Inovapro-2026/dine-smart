@@ -69,36 +69,36 @@ export default function AdminWhatsApp() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Integração WhatsApp</h1>
-        <p className="text-muted-foreground">Conecte e configure automações</p>
+        <h1 className="text-xl sm:text-2xl font-bold">Integração WhatsApp</h1>
+        <p className="text-sm text-muted-foreground">Conecte e configure automações</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         {/* Status e Conexão */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
               Status da Conexão
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs sm:text-sm">
               Conecte seu WhatsApp para automações
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Status Badge */}
-            <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-xl">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-secondary/50 rounded-lg sm:rounded-xl gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 {isConnected ? (
-                  <Wifi className="h-6 w-6 text-success" />
+                  <Wifi className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
                 ) : (
-                  <WifiOff className="h-6 w-6 text-destructive" />
+                  <WifiOff className="h-5 w-5 sm:h-6 sm:w-6 text-destructive" />
                 )}
                 <div>
-                  <p className="font-medium">WhatsApp</p>
-                  <Badge variant={isConnected ? 'default' : 'destructive'} className="mt-1">
+                  <p className="font-medium text-sm sm:text-base">WhatsApp</p>
+                  <Badge variant={isConnected ? 'default' : 'destructive'} className="mt-1 text-[10px] sm:text-xs">
                     {isConnected ? 'Conectado' : 'Desconectado'}
                   </Badge>
                 </div>
@@ -106,10 +106,11 @@ export default function AdminWhatsApp() {
               <Button 
                 variant="outline" 
                 size="icon"
+                className="h-8 w-8 sm:h-9 sm:w-9"
                 onClick={handleCheckStatus}
                 disabled={isChecking}
               >
-                <RefreshCw className={`h-4 w-4 ${isChecking ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isChecking ? 'animate-spin' : ''}`} />
               </Button>
             </div>
 
@@ -118,7 +119,7 @@ export default function AdminWhatsApp() {
             {/* QR Code */}
             <div className="space-y-3">
               <Button 
-                className="w-full" 
+                className="w-full text-sm sm:text-base" 
                 onClick={handleGenerateQR}
                 disabled={isLoading || isConnected}
               >
@@ -131,13 +132,13 @@ export default function AdminWhatsApp() {
               </Button>
 
               {qrCode && !isConnected && (
-                <div className="flex flex-col items-center p-4 bg-white rounded-xl">
+                <div className="flex flex-col items-center p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl">
                   <img 
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}`}
                     alt="QR Code WhatsApp"
-                    className="w-48 h-48"
+                    className="w-36 h-36 sm:w-48 sm:h-48"
                   />
-                  <p className="text-sm text-muted-foreground mt-2 text-center">
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-2 text-center">
                     Escaneie com o WhatsApp
                   </p>
                 </div>
@@ -148,38 +149,40 @@ export default function AdminWhatsApp() {
 
         {/* Teste de Mensagem */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Send className="h-5 w-5" />
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
               Testar Envio
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs sm:text-sm">
               Envie uma mensagem de teste
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="testNumber">Número de telefone</Label>
+              <Label htmlFor="testNumber" className="text-xs sm:text-sm">Número de telefone</Label>
               <Input
                 id="testNumber"
                 placeholder="(00) 00000-0000"
                 value={testNumber}
                 onChange={(e) => setTestNumber(e.target.value)}
+                className="text-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="testMessage">Mensagem</Label>
+              <Label htmlFor="testMessage" className="text-xs sm:text-sm">Mensagem</Label>
               <Textarea
                 id="testMessage"
                 value={testMessage}
                 onChange={(e) => setTestMessage(e.target.value)}
                 rows={3}
+                className="text-sm"
               />
             </div>
 
             <Button 
-              className="w-full" 
+              className="w-full text-sm sm:text-base" 
               onClick={handleSendTest}
               disabled={isSending || !isConnected}
             >
@@ -192,7 +195,7 @@ export default function AdminWhatsApp() {
             </Button>
 
             {!isConnected && (
-              <p className="text-sm text-muted-foreground text-center">
+              <p className="text-xs sm:text-sm text-muted-foreground text-center">
                 Conecte o WhatsApp primeiro para enviar mensagens
               </p>
             )}
@@ -202,69 +205,74 @@ export default function AdminWhatsApp() {
 
       {/* Configuração de Mensagens */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
             Mensagens Automáticas
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs sm:text-sm">
             Configure as mensagens enviadas em cada etapa do pedido
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="msgWelcome">Mensagem de Boas-vindas</Label>
+              <Label htmlFor="msgWelcome" className="text-xs sm:text-sm">Mensagem de Boas-vindas</Label>
               <Textarea
                 id="msgWelcome"
                 value={messages.welcome}
                 onChange={(e) => setMessages({ ...messages, welcome: e.target.value })}
-                rows={5}
+                rows={4}
+                className="text-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="msgPreparing">Pedido em Preparo</Label>
+              <Label htmlFor="msgPreparing" className="text-xs sm:text-sm">Pedido em Preparo</Label>
               <Textarea
                 id="msgPreparing"
                 value={messages.preparing}
                 onChange={(e) => setMessages({ ...messages, preparing: e.target.value })}
-                rows={5}
+                rows={4}
+                className="text-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="msgReady">Pronto para Retirada</Label>
+              <Label htmlFor="msgReady" className="text-xs sm:text-sm">Pronto para Retirada</Label>
               <Textarea
                 id="msgReady"
                 value={messages.ready}
                 onChange={(e) => setMessages({ ...messages, ready: e.target.value })}
-                rows={5}
+                rows={4}
+                className="text-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="msgDelivery">Saiu para Entrega</Label>
+              <Label htmlFor="msgDelivery" className="text-xs sm:text-sm">Saiu para Entrega</Label>
               <Textarea
                 id="msgDelivery"
                 value={messages.delivery}
                 onChange={(e) => setMessages({ ...messages, delivery: e.target.value })}
-                rows={5}
+                rows={4}
+                className="text-sm"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="msgCompleted">Pedido Concluído</Label>
+            <Label htmlFor="msgCompleted" className="text-xs sm:text-sm">Pedido Concluído</Label>
             <Textarea
               id="msgCompleted"
               value={messages.completed}
               onChange={(e) => setMessages({ ...messages, completed: e.target.value })}
               rows={2}
+              className="text-sm"
             />
           </div>
 
-          <Button className="w-full">
+          <Button className="w-full sm:w-auto text-sm sm:text-base">
             Salvar Configurações
           </Button>
         </CardContent>

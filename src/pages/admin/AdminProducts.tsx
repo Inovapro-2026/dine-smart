@@ -119,23 +119,23 @@ export default function AdminProducts() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-          <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-primary">{stats.total}</p>
-            <p className="text-sm text-muted-foreground">Total</p>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <p className="text-xl sm:text-3xl font-bold text-primary">{stats.total}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Total</p>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-success/10 to-success/5 border-success/20">
-          <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-success">{stats.active}</p>
-            <p className="text-sm text-muted-foreground">Ativos</p>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <p className="text-xl sm:text-3xl font-bold text-success">{stats.active}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Ativos</p>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-muted to-muted/50">
-          <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-muted-foreground">{stats.inactive}</p>
-            <p className="text-sm text-muted-foreground">Inativos</p>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <p className="text-xl sm:text-3xl font-bold text-muted-foreground">{stats.inactive}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Inativos</p>
           </CardContent>
         </Card>
       </div>
@@ -156,32 +156,33 @@ export default function AdminProducts() {
             </div>
 
             {/* View mode & Show inactive */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button
                 variant={showInactive ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setShowInactive(!showInactive)}
-                className="gap-2"
+                className="gap-1.5 text-xs sm:text-sm"
               >
-                {showInactive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                {showInactive ? 'Mostrar inativos' : 'Ocultar inativos'}
+                {showInactive ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                <span className="hidden sm:inline">{showInactive ? 'Mostrar inativos' : 'Ocultar inativos'}</span>
+                <span className="sm:hidden">{showInactive ? 'Inativos' : 'Ativos'}</span>
               </Button>
               <div className="flex border rounded-lg overflow-hidden">
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
                   size="icon"
-                  className="rounded-none h-9 w-9"
+                  className="rounded-none h-8 w-8 sm:h-9 sm:w-9"
                   onClick={() => setViewMode('grid')}
                 >
-                  <LayoutGrid className="h-4 w-4" />
+                  <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
                 <Button
                   variant={viewMode === 'table' ? 'default' : 'ghost'}
                   size="icon"
-                  className="rounded-none h-9 w-9"
+                  className="rounded-none h-8 w-8 sm:h-9 sm:w-9"
                   onClick={() => setViewMode('table')}
                 >
-                  <List className="h-4 w-4" />
+                  <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             </div>
@@ -233,16 +234,16 @@ export default function AdminProducts() {
 
       {/* Grid View */}
       {!isLoading && viewMode === 'grid' && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {filteredProducts.map((product) => (
             <Card 
               key={product.id} 
               className={cn(
-                "group transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
+                "group transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5",
                 !product.is_active && "opacity-60"
               )}
             >
-              <div className="relative aspect-video overflow-hidden rounded-t-lg bg-secondary">
+              <div className="relative aspect-square overflow-hidden rounded-t-lg bg-secondary">
                 {product.image_url ? (
                   <img
                     src={product.image_url}
@@ -254,65 +255,61 @@ export default function AdminProducts() {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <ImageOff className="h-12 w-12 text-muted-foreground/30" />
+                    <ImageOff className="h-8 w-8 text-muted-foreground/30" />
                   </div>
                 )}
                 {!product.is_active && (
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <Badge variant="destructive" className="text-sm">
+                    <Badge variant="destructive" className="text-xs">
                       <EyeOff className="h-3 w-3 mr-1" />
-                      Desativado
+                      Off
                     </Badge>
                   </div>
                 )}
-                <div className="absolute top-2 left-2">
-                  <Badge variant="secondary" className="text-xs shadow">
-                    {product.category?.icon} {product.category?.name || 'Sem categoria'}
+                <div className="absolute top-1.5 left-1.5">
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shadow">
+                    {product.category?.icon}
                   </Badge>
                 </div>
               </div>
 
-              <CardContent className="p-4">
-                <div className="mb-3">
-                  <h3 className="font-semibold line-clamp-1 text-lg">{product.name}</h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1 min-h-[40px]">
+              <CardContent className="p-2.5">
+                <div className="mb-2">
+                  <h3 className="font-semibold line-clamp-1 text-sm">{product.name}</h3>
+                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
                     {product.description || 'Sem descrição'}
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-xl font-bold text-primary">{formatCurrency(product.price)}</p>
-                  <Badge variant="outline" className="text-xs">
-                    Estoque: {product.stock}
-                  </Badge>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-bold text-primary">{formatCurrency(product.price)}</p>
+                  <span className="text-[10px] text-muted-foreground">
+                    Est: {product.stock}
+                  </span>
                 </div>
 
-                <div className="flex items-center justify-between pt-3 border-t">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={product.is_active}
-                      onCheckedChange={() => handleToggleActive(product)}
-                    />
-                    <span className="text-xs text-muted-foreground">
-                      {product.is_active ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </div>
-                  <div className="flex gap-1">
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <Switch
+                    checked={product.is_active}
+                    onCheckedChange={() => handleToggleActive(product)}
+                    className="scale-75 origin-left"
+                  />
+                  <div className="flex gap-0.5">
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
+                      className="h-7 w-7 hover:bg-primary/10 hover:text-primary"
                       onClick={() => handleEdit(product)}
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-3.5 w-3.5" />
                     </Button>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 hover:bg-destructive/10 text-destructive"
+                      className="h-7 w-7 hover:bg-destructive/10 text-destructive"
                       onClick={() => handleDelete(product)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>
