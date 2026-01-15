@@ -78,13 +78,15 @@ export default function AdminOrders() {
   ].filter(d => d.value > 0), [ordersByStatus]);
 
   const hourlyData = useMemo(() => {
-    const hours: { [key: string]: number } = {};
+    const hours: Record<number, number> = {};
     orders?.forEach(order => {
       const hour = new Date(order.created_at).getHours();
-      const key = `${hour}h`;
-      hours[key] = (hours[key] || 0) + 1;
+      hours[hour] = (hours[hour] || 0) + 1;
     });
-    return Object.entries(hours).map(([hour, count]) => ({ hour, pedidos: count }));
+
+    return Object.entries(hours)
+      .map(([hour, count]) => ({ hour: `${Number(hour)}h`, pedidos: count }))
+      .sort((a, b) => Number(a.hour.replace('h', '')) - Number(b.hour.replace('h', '')));
   }, [orders]);
 
   const formatCurrency = (value: number) => {
@@ -297,7 +299,7 @@ export default function AdminOrders() {
   }
 
   return (
-    <div className="admin-bg-animated min-h-screen -m-4 sm:-m-6 p-4 sm:p-6 relative">
+    <div className="admin-bg-animated admin-no-motion p-4 sm:p-6 relative overflow-x-hidden rounded-2xl">
       <div className="relative z-10 space-y-5 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
@@ -306,7 +308,7 @@ export default function AdminOrders() {
             <p className="text-sm text-muted-foreground mt-1">PDV em tempo real • Hoje</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-success" />
             <span className="text-xs text-muted-foreground">Atualização automática</span>
           </div>
         </div>
@@ -360,6 +362,7 @@ export default function AdminOrders() {
                           outerRadius={70}
                           paddingAngle={4}
                           dataKey="value"
+                          isAnimationActive={false}
                         >
                           {pieData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -416,7 +419,8 @@ export default function AdminOrders() {
                           stroke="hsl(var(--admin-primary))" 
                           strokeWidth={2}
                           fillOpacity={1} 
-                          fill="url(#colorPedidos)" 
+                          fill="url(#colorPedidos)"
+                          isAnimationActive={false}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
