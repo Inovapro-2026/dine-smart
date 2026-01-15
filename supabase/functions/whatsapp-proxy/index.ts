@@ -1,12 +1,12 @@
 // Supabase Edge Function: WhatsApp proxy (avoids CORS/mixed-content)
-// External API: Food-Whats
+// External API: ISA (Baileys)
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const API_BASE = 'http://148.230.76.60:3334';
+const API_BASE = 'http://148.230.76.60:3333';
 
 type Action = 'status' | 'qr' | 'send';
 
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     if (body.action === 'status') {
       const r = await fetch(`${API_BASE}/status`);
       const data = await r.json().catch(() => ({}));
-      // expected: { status: 'open'|'close' }
+      // expected: { status: 'open'|'connecting'|'close' }
       return json({ status: data.status ?? null });
     }
 
