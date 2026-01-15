@@ -1,35 +1,126 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useStoreSettings } from '@/hooks/useStoreSettings';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { 
   Store, 
   Image, 
   Clock, 
   DollarSign,
-  Link as LinkIcon,
   Save,
-  Upload
+  Upload,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function AdminSettings() {
-  const [settings, setSettings] = useState({
-    storeName: 'INOVAFOOD',
-    storeLink: 'inovafood',
-    address: 'Rua Principal, 123 - Centro',
-    phone: '(11) 99999-9999',
-    deliveryFee: '5.00',
-    minOrderValue: '20.00',
-    openingTime: '08:00',
-    closingTime: '22:00',
-  });
+interface OpeningHours {
+  [key: string]: { open: string; close: string };
+}
 
-  const handleSave = () => {
-    toast.success('Configurações salvas com sucesso!');
+const DAYS = [
+  { key: 'monday', label: 'Segunda-feira' },
+  { key: 'tuesday', label: 'Terça-feira' },
+  { key: 'wednesday', label: 'Quarta-feira' },
+  { key: 'thursday', label: 'Quinta-feira' },
+  { key: 'friday', label: 'Sexta-feira' },
+  { key: 'saturday', label: 'Sábado' },
+  { key: 'sunday', label: 'Domingo' },
+];
+
+const DEFAULT_HOURS: OpeningHours = {
+  monday: { open: '08:00', close: '22:00' },
+  tuesday: { open: '08:00', close: '22:00' },
+  wednesday: { open: '08:00', close: '22:00' },
+  thursday: { open: '08:00', close: '22:00' },
+  friday: { open: '08:00', close: '22:00' },
+  saturday: { open: '08:00', close: '22:00' },
+  sunday: { open: '08:00', close: '22:00' },
+};
+
+export default function AdminSettings() {
+  const { settings: dbSettings, isLoading: isLoadingSettings, updateSettings, isSaving } = useStoreSettings();
+
+  const [storeName, setStoreName] = useState('INOVAFOOD');
+  const [storeLink, setStoreLink] = useState('inovafood');
+  const [address, setAddress] = useState('Rua Principal, 123 - Centro');
+  const [phone, setPhone] = useState('(11) 99999-9999');
+  const [deliveryFee, setDeliveryFee] = useState('5.00');
+  const [minOrderValue, setMinOrderValue] = useState('20.00');
+  const [openingHours, setOpeningHours] = useState<OpeningHours>(DEFAULT_HOURS);
+  const [useSimpleHours, setUseSimpleHours] = useState(true);
+  const [simpleOpen, setSimpleOpen] = useState('08:00');
+  const [simpleClose, setSimpleClose] = useState('22:00');
+
+  // Sync with database settings
+  useEffect(() => {
+    if (!isLoadingSettings && dbSettings) {
+      setDeliveryFee(dbSettings.delivery_fee?.toString() ?? '5.00');
+      setMinOrderValue(dbSettings.min_order_value?.toString() ?? '20.00');
+      
+      // Load opening hours from DB if available
+      const storedHours = (dbSettings as any).opening_hours;
+      if (storedHours && typeof storedHours === 'object') {
+        setOpeningHours(storedHours);
+        
+        // Check if all days have same hours (simple mode)
+        const firstDay = storedHours.monday;
+        const allSame = DAYS.every(d => 
+          storedHours[d.key]?.open === firstDay?.open && 
+          storedHours[d.key]?.close === firstDay?.close
+        );
+        
+        if (allSame && firstDay) {
+          setUseSimpleHours(true);
+          setSimpleOpen(firstDay.open);
+          setSimpleClose(firstDay.close);
+        } else {
+          setUseSimpleHours(false);
+        }
+      }
+    }
+  }, [dbSettings, isLoadingSettings]);
+
+  const handleHoursChange = (day: string, field: 'open' | 'close', value: string) => {
+    setOpeningHours(prev => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value }
+    }));
+  };
+
+  const handleSimpleHoursChange = (field: 'open' | 'close', value: string) => {
+    if (field === 'open') setSimpleOpen(value);
+    else setSimpleClose(value);
+    
+    // Update all days
+    const newHours: OpeningHours = {};
+    DAYS.forEach(d => {
+      newHours[d.key] = {
+        open: field === 'open' ? value : simpleOpen,
+        close: field === 'close' ? value : simpleClose,
+      };
+    });
+    setOpeningHours(newHours);
+  };
+
+  const handleSave = async () => {
+    // Build final opening hours
+    let finalHours = openingHours;
+    if (useSimpleHours) {
+      finalHours = {};
+      DAYS.forEach(d => {
+        finalHours[d.key] = { open: simpleOpen, close: simpleClose };
+      });
+    }
+
+    await updateSettings({
+      delivery_fee: parseFloat(deliveryFee) || 0,
+      min_order_value: parseFloat(minOrderValue) || 0,
+      opening_hours: finalHours as any,
+    });
   };
 
   return (
@@ -56,8 +147,8 @@ export default function AdminSettings() {
               <Label htmlFor="storeName" className="text-xs sm:text-sm">Nome da Loja</Label>
               <Input
                 id="storeName"
-                value={settings.storeName}
-                onChange={(e) => setSettings({ ...settings, storeName: e.target.value })}
+                value={storeName}
+                onChange={(e) => setStoreName(e.target.value)}
                 className="text-sm"
               />
             </div>
@@ -71,8 +162,8 @@ export default function AdminSettings() {
                 <Input
                   id="storeLink"
                   className="rounded-l-none text-sm"
-                  value={settings.storeLink}
-                  onChange={(e) => setSettings({ ...settings, storeLink: e.target.value })}
+                  value={storeLink}
+                  onChange={(e) => setStoreLink(e.target.value)}
                 />
               </div>
             </div>
@@ -81,8 +172,8 @@ export default function AdminSettings() {
               <Label htmlFor="address" className="text-xs sm:text-sm">Endereço</Label>
               <Input
                 id="address"
-                value={settings.address}
-                onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
                 className="text-sm"
               />
             </div>
@@ -91,8 +182,8 @@ export default function AdminSettings() {
               <Label htmlFor="phone" className="text-xs sm:text-sm">Telefone</Label>
               <Input
                 id="phone"
-                value={settings.phone}
-                onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 className="text-sm"
               />
             </div>
@@ -139,48 +230,86 @@ export default function AdminSettings() {
         </Card>
 
         {/* Horário de Funcionamento */}
-        <Card>
+        <Card className="lg:col-span-2">
           <CardHeader className="pb-3 sm:pb-6">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
-              Horário de Funcionamento
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              Define quando a loja está aberta
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="openingTime" className="text-xs sm:text-sm">Abre às</Label>
-                <Input
-                  id="openingTime"
-                  type="time"
-                  value={settings.openingTime}
-                  onChange={(e) => setSettings({ ...settings, openingTime: e.target.value })}
-                  className="text-sm"
-                />
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
+                  Horário de Funcionamento
+                </CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
+                  Define quando a loja está aberta (usado pelo bot do WhatsApp)
+                </CardDescription>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="closingTime" className="text-xs sm:text-sm">Fecha às</Label>
-                <Input
-                  id="closingTime"
-                  type="time"
-                  value={settings.closingTime}
-                  onChange={(e) => setSettings({ ...settings, closingTime: e.target.value })}
-                  className="text-sm"
+              <div className="flex items-center gap-2">
+                <Label htmlFor="simpleMode" className="text-xs text-muted-foreground">
+                  Mesmo horário todos os dias
+                </Label>
+                <Switch 
+                  id="simpleMode" 
+                  checked={useSimpleHours} 
+                  onCheckedChange={setUseSimpleHours}
                 />
               </div>
             </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {useSimpleHours ? (
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md">
+                <div className="space-y-2">
+                  <Label htmlFor="simpleOpen" className="text-xs sm:text-sm">Abre às</Label>
+                  <Input
+                    id="simpleOpen"
+                    type="time"
+                    value={simpleOpen}
+                    onChange={(e) => handleSimpleHoursChange('open', e.target.value)}
+                    className="text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="simpleClose" className="text-xs sm:text-sm">Fecha às</Label>
+                  <Input
+                    id="simpleClose"
+                    type="time"
+                    value={simpleClose}
+                    onChange={(e) => handleSimpleHoursChange('close', e.target.value)}
+                    className="text-sm"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {DAYS.map(day => (
+                  <div key={day.key} className="flex flex-col gap-2 p-3 bg-secondary/50 rounded-lg">
+                    <span className="text-xs font-medium">{day.label}</span>
+                    <div className="flex gap-2">
+                      <Input
+                        type="time"
+                        value={openingHours[day.key]?.open ?? '08:00'}
+                        onChange={(e) => handleHoursChange(day.key, 'open', e.target.value)}
+                        className="text-xs h-8"
+                      />
+                      <Input
+                        type="time"
+                        value={openingHours[day.key]?.close ?? '22:00'}
+                        onChange={(e) => handleHoursChange(day.key, 'close', e.target.value)}
+                        className="text-xs h-8"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Horário aplicado para todos os dias da semana
+            <p className="text-xs text-muted-foreground">
+              ℹ️ Esses horários são enviados automaticamente pelo bot do WhatsApp quando o cliente digita "4".
             </p>
           </CardContent>
         </Card>
 
         {/* Taxas */}
-        <Card>
+        <Card className="lg:col-span-2">
           <CardHeader className="pb-3 sm:pb-6">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
               <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -191,35 +320,45 @@ export default function AdminSettings() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="deliveryFee" className="text-xs sm:text-sm">Taxa de Entrega (R$)</Label>
-              <Input
-                id="deliveryFee"
-                type="number"
-                step="0.01"
-                value={settings.deliveryFee}
-                onChange={(e) => setSettings({ ...settings, deliveryFee: e.target.value })}
-                className="text-sm"
-              />
-            </div>
+            <div className="grid gap-4 sm:grid-cols-2 max-w-md">
+              <div className="space-y-2">
+                <Label htmlFor="deliveryFee" className="text-xs sm:text-sm">Taxa de Entrega (R$)</Label>
+                <Input
+                  id="deliveryFee"
+                  type="number"
+                  step="0.01"
+                  value={deliveryFee}
+                  onChange={(e) => setDeliveryFee(e.target.value)}
+                  className="text-sm"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="minOrderValue" className="text-xs sm:text-sm">Pedido Mínimo (R$)</Label>
-              <Input
-                id="minOrderValue"
-                type="number"
-                step="0.01"
-                value={settings.minOrderValue}
-                onChange={(e) => setSettings({ ...settings, minOrderValue: e.target.value })}
-                className="text-sm"
-              />
+              <div className="space-y-2">
+                <Label htmlFor="minOrderValue" className="text-xs sm:text-sm">Pedido Mínimo (R$)</Label>
+                <Input
+                  id="minOrderValue"
+                  type="number"
+                  step="0.01"
+                  value={minOrderValue}
+                  onChange={(e) => setMinOrderValue(e.target.value)}
+                  className="text-sm"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Button className="w-full sm:w-auto text-sm sm:text-base" onClick={handleSave}>
-        <Save className="h-4 w-4 mr-2" />
+      <Button 
+        className="w-full sm:w-auto text-sm sm:text-base" 
+        onClick={handleSave}
+        disabled={isSaving}
+      >
+        {isSaving ? (
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        ) : (
+          <Save className="h-4 w-4 mr-2" />
+        )}
         Salvar Configurações
       </Button>
     </div>
