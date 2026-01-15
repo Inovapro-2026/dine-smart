@@ -172,6 +172,163 @@ export type Database = {
           },
         ]
       }
+      inovafood_categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          sort_order: number | null
+          store_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          sort_order?: number | null
+          store_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          sort_order?: number | null
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inovafood_categories_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inovafood_orders: {
+        Row: {
+          created_at: string
+          customer_address: string
+          customer_name: string
+          customer_phone: string
+          delivery_fee: number
+          id: string
+          items: Json
+          notes: string | null
+          payment_method: string | null
+          status: string
+          store_id: string | null
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_address: string
+          customer_name: string
+          customer_phone: string
+          delivery_fee?: number
+          id?: string
+          items?: Json
+          notes?: string | null
+          payment_method?: string | null
+          status?: string
+          store_id?: string | null
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_address?: string
+          customer_name?: string
+          customer_phone?: string
+          delivery_fee?: number
+          id?: string
+          items?: Json
+          notes?: string | null
+          payment_method?: string | null
+          status?: string
+          store_id?: string | null
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inovafood_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inovafood_products: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          price: number
+          stock: number | null
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          price?: number
+          stock?: number | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          stock?: number | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inovafood_products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "inovafood_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inovafood_products_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -253,7 +410,12 @@ export type Database = {
         Row: {
           created_at: string
           customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          delivery_fee: number | null
           id: string
+          notes: string | null
+          payment_method: string | null
           shipping_address: string | null
           status: Database["public"]["Enums"]["order_status"] | null
           store_id: string | null
@@ -263,7 +425,12 @@ export type Database = {
         Insert: {
           created_at?: string
           customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          delivery_fee?: number | null
           id?: string
+          notes?: string | null
+          payment_method?: string | null
           shipping_address?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           store_id?: string | null
@@ -273,7 +440,12 @@ export type Database = {
         Update: {
           created_at?: string
           customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          delivery_fee?: number | null
           id?: string
+          notes?: string | null
+          payment_method?: string | null
           shipping_address?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           store_id?: string | null
@@ -653,6 +825,68 @@ export type Database = {
           },
         ]
       }
+      store_settings: {
+        Row: {
+          created_at: string
+          delivery_fee: number | null
+          id: string
+          min_order_value: number | null
+          opening_hours: Json | null
+          store_id: string | null
+          store_link: string | null
+          updated_at: string
+          whatsapp_completed_message: string | null
+          whatsapp_connected: boolean | null
+          whatsapp_delivery_message: string | null
+          whatsapp_number: string | null
+          whatsapp_preparing_message: string | null
+          whatsapp_ready_message: string | null
+          whatsapp_welcome_message: string | null
+        }
+        Insert: {
+          created_at?: string
+          delivery_fee?: number | null
+          id?: string
+          min_order_value?: number | null
+          opening_hours?: Json | null
+          store_id?: string | null
+          store_link?: string | null
+          updated_at?: string
+          whatsapp_completed_message?: string | null
+          whatsapp_connected?: boolean | null
+          whatsapp_delivery_message?: string | null
+          whatsapp_number?: string | null
+          whatsapp_preparing_message?: string | null
+          whatsapp_ready_message?: string | null
+          whatsapp_welcome_message?: string | null
+        }
+        Update: {
+          created_at?: string
+          delivery_fee?: number | null
+          id?: string
+          min_order_value?: number | null
+          opening_hours?: Json | null
+          store_id?: string | null
+          store_link?: string | null
+          updated_at?: string
+          whatsapp_completed_message?: string | null
+          whatsapp_connected?: boolean | null
+          whatsapp_delivery_message?: string | null
+          whatsapp_number?: string | null
+          whatsapp_preparing_message?: string | null
+          whatsapp_ready_message?: string | null
+          whatsapp_welcome_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_settings_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           banner_url: string | null
@@ -817,7 +1051,15 @@ export type Database = {
     Enums: {
       account_status: "pending" | "approved" | "rejected" | "suspended"
       app_role: "admin" | "seller" | "provider" | "customer"
-      order_status: "pending" | "shipped" | "delivered" | "cancelled"
+      order_status:
+        | "pending"
+        | "shipped"
+        | "delivered"
+        | "cancelled"
+        | "preparing"
+        | "ready"
+        | "out_for_delivery"
+        | "completed"
       service_status: "pending" | "in_progress" | "completed" | "cancelled"
     }
     CompositeTypes: {
@@ -948,7 +1190,16 @@ export const Constants = {
     Enums: {
       account_status: ["pending", "approved", "rejected", "suspended"],
       app_role: ["admin", "seller", "provider", "customer"],
-      order_status: ["pending", "shipped", "delivered", "cancelled"],
+      order_status: [
+        "pending",
+        "shipped",
+        "delivered",
+        "cancelled",
+        "preparing",
+        "ready",
+        "out_for_delivery",
+        "completed",
+      ],
       service_status: ["pending", "in_progress", "completed", "cancelled"],
     },
   },
