@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Json } from '@/integrations/supabase/types';
 
 export interface WhatsAppMessages {
   welcome: string;
@@ -8,6 +9,15 @@ export interface WhatsAppMessages {
   ready: string;
   delivery: string;
   completed: string;
+}
+
+export interface OpeningHoursDay {
+  open: string;
+  close: string;
+}
+
+export interface OpeningHours {
+  [key: string]: OpeningHoursDay;
 }
 
 export interface StoreSettingsData {
@@ -21,7 +31,18 @@ export interface StoreSettingsData {
   whatsapp_completed_message: string;
   whatsapp_connected: boolean;
   whatsapp_number: string | null;
+  opening_hours: OpeningHours | null;
 }
+
+const DEFAULT_OPENING_HOURS: OpeningHours = {
+  monday: { open: '08:00', close: '22:00' },
+  tuesday: { open: '08:00', close: '22:00' },
+  wednesday: { open: '08:00', close: '22:00' },
+  thursday: { open: '08:00', close: '22:00' },
+  friday: { open: '08:00', close: '22:00' },
+  saturday: { open: '08:00', close: '22:00' },
+  sunday: { open: '08:00', close: '22:00' },
+};
 
 const DEFAULT_SETTINGS: StoreSettingsData = {
   delivery_fee: 5,
@@ -33,7 +54,15 @@ const DEFAULT_SETTINGS: StoreSettingsData = {
   whatsapp_completed_message: '🎉 Pedido entregue! Obrigado pela preferência!',
   whatsapp_connected: false,
   whatsapp_number: null,
+  opening_hours: DEFAULT_OPENING_HOURS,
 };
+
+function parseOpeningHours(json: Json | null): OpeningHours | null {
+  if (!json || typeof json !== 'object' || Array.isArray(json)) {
+    return null;
+  }
+  return json as unknown as OpeningHours;
+}
 
 export function useStoreSettings(storeId?: string) {
   const queryClient = useQueryClient();
@@ -69,12 +98,19 @@ export function useStoreSettings(storeId?: string) {
         whatsapp_completed_message: data.whatsapp_completed_message ?? DEFAULT_SETTINGS.whatsapp_completed_message,
         whatsapp_connected: data.whatsapp_connected ?? false,
         whatsapp_number: data.whatsapp_number ?? null,
+        opening_hours: parseOpeningHours(data.opening_hours) ?? DEFAULT_OPENING_HOURS,
       };
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: async (updates: Partial<StoreSettingsData>) => {
+      // Convert opening_hours to Json type for Supabase
+      const dbUpdates: Record<string, unknown> = { ...updates };
+      if (updates.opening_hours) {
+        dbUpdates.opening_hours = updates.opening_hours as unknown as Json;
+      }
+
       // Check if settings exist
       let q = supabase.from('store_settings').select('id');
       if (storeId) q = q.eq('store_id', storeId);
@@ -85,7 +121,7 @@ export function useStoreSettings(storeId?: string) {
         // Update existing
         const { data, error } = await supabase
           .from('store_settings')
-          .update(updates)
+          .update(dbUpdates)
           .eq('id', existing.id)
           .select()
           .single();
@@ -95,7 +131,7 @@ export function useStoreSettings(storeId?: string) {
       } else {
         // Insert new
         const insertData = {
-          ...updates,
+          ...dbUpdates,
           store_id: storeId ?? null,
         };
         
