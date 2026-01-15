@@ -14,7 +14,7 @@ export default function StorePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   
-  const { data: products, isLoading: productsLoading } = useProducts();
+  const { data: products, isLoading: productsLoading } = useProducts(undefined, false);
   const { data: categories, isLoading: categoriesLoading } = useCategories();
 
   const filteredProducts = selectedCategory

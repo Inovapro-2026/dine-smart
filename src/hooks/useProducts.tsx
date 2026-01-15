@@ -2,9 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { InovaProduct, InovaCategory } from '@/types/inovafood';
 
-export function useProducts(storeId?: string) {
+export function useProducts(storeId?: string, includeInactive = true) {
   return useQuery({
-    queryKey: ['inovafood-products', storeId],
+    queryKey: ['inovafood-products', storeId, includeInactive],
     queryFn: async (): Promise<InovaProduct[]> => {
       let query = supabase
         .from('inovafood_products')
@@ -12,8 +12,11 @@ export function useProducts(storeId?: string) {
           *,
           category:inovafood_categories(*)
         `)
-        .eq('is_active', true)
         .order('created_at', { ascending: false });
+
+      if (!includeInactive) {
+        query = query.eq('is_active', true);
+      }
 
       if (storeId) {
         query = query.eq('store_id', storeId);
