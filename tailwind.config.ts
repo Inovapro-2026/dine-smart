@@ -69,6 +69,12 @@ export default {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
         },
+        admin: {
+          primary: "hsl(var(--admin-primary))",
+          secondary: "hsl(var(--admin-secondary))",
+          accent: "hsl(var(--admin-accent))",
+          glow: "hsl(var(--admin-glow))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
