@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-const WHATSAPP_API_BASE = 'http://148.230.76.60:3333';
+const WHATSAPP_API_BASE = 'http://148.230.76.60:3334';
 
 interface WhatsAppStatus {
   connected: boolean;
-  number?: string;
 }
 
 export function useWhatsApp() {
@@ -17,8 +16,10 @@ export function useWhatsApp() {
     try {
       const response = await fetch(`${WHATSAPP_API_BASE}/status`);
       const data = await response.json();
-      setIsConnected(data.connected || false);
-      return data;
+      // API retorna { status: "open" } ou { status: "close" }
+      const connected = data.status === 'open';
+      setIsConnected(connected);
+      return { connected };
     } catch (error) {
       console.error('Error checking WhatsApp status:', error);
       setIsConnected(false);
@@ -30,14 +31,20 @@ export function useWhatsApp() {
     setIsLoading(true);
     try {
       const response = await fetch(`${WHATSAPP_API_BASE}/qr`);
-      const data = await response.json();
+      // API retorna HTML <img> com base64
+      const htmlText = await response.text();
       
-      if (data.qr) {
-        setQrCode(data.qr);
-        return data.qr;
+      // Extrair src do base64 da tag img
+      const srcMatch = htmlText.match(/src="([^"]+)"/);
+      if (srcMatch && srcMatch[1]) {
+        const base64Src = srcMatch[1];
+        setQrCode(base64Src);
+        return base64Src;
       }
       
-      return null;
+      // Se não conseguir extrair, retorna o texto completo
+      setQrCode(htmlText);
+      return htmlText;
     } catch (error) {
       console.error('Error generating QR code:', error);
       toast.error('Erro ao gerar QR Code. Verifique a conexão com o servidor.');
@@ -68,7 +75,8 @@ export function useWhatsApp() {
 
       const data = await response.json();
       
-      if (data.success) {
+      // API retorna { status: "success", message: "Mensagem enviada!" }
+      if (data.status === 'success') {
         return true;
       }
       

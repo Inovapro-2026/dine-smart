@@ -134,7 +134,7 @@ export default function AdminWhatsApp() {
               {qrCode && !isConnected && (
                 <div className="flex flex-col items-center p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl">
                   <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}`}
+                    src={qrCode}
                     alt="QR Code WhatsApp"
                     className="w-36 h-36 sm:w-48 sm:h-48"
                   />
