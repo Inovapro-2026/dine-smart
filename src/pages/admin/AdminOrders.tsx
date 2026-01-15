@@ -92,51 +92,51 @@ export default function AdminOrders() {
 
     return (
       <Card className="animate-slide-up">
-        <CardContent className="p-4">
+        <CardContent className="p-3 sm:p-4">
           {/* Header */}
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                <User className="h-5 w-5 text-primary" />
+          <div className="flex items-start justify-between mb-2 sm:mb-3 gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary/20 rounded-full flex items-center justify-center shrink-0">
+                <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </div>
-              <div>
-                <p className="font-semibold">{order.customer_name}</p>
-                <p className="text-xs text-muted-foreground">
+              <div className="min-w-0">
+                <p className="font-semibold text-sm sm:text-base truncate">{order.customer_name}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
                   {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className="font-bold text-primary">
+            <Badge variant="outline" className="font-bold text-primary text-xs sm:text-sm shrink-0">
               {formatCurrency(order.total)}
             </Badge>
           </div>
 
           {/* Contact */}
-          <div className="flex flex-wrap gap-2 mb-3 text-sm">
+          <div className="flex flex-col gap-1 mb-2 sm:mb-3 text-xs sm:text-sm">
             <div className="flex items-center gap-1 text-muted-foreground">
-              <Phone className="h-3 w-3" />
-              {order.customer_phone}
+              <Phone className="h-3 w-3 shrink-0" />
+              <span className="truncate">{order.customer_phone}</span>
             </div>
             <div className="flex items-center gap-1 text-muted-foreground">
-              <MapPin className="h-3 w-3" />
-              <span className="truncate max-w-[200px]">{order.customer_address}</span>
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate">{order.customer_address}</span>
             </div>
           </div>
 
-          <Separator className="my-3" />
+          <Separator className="my-2 sm:my-3" />
 
           {/* Items */}
-          <div className="space-y-1 mb-3">
+          <div className="space-y-1 mb-2 sm:mb-3 max-h-24 overflow-y-auto">
             {order.items.map((item, idx) => (
-              <div key={idx} className="flex justify-between text-sm">
-                <span>{item.quantity}x {item.product.name}</span>
-                <span className="text-muted-foreground">{formatCurrency(item.product.price * item.quantity)}</span>
+              <div key={idx} className="flex justify-between text-xs sm:text-sm">
+                <span className="truncate mr-2">{item.quantity}x {item.product.name}</span>
+                <span className="text-muted-foreground shrink-0">{formatCurrency(item.product.price * item.quantity)}</span>
               </div>
             ))}
           </div>
 
           {order.notes && (
-            <div className="bg-warning/10 text-warning-foreground text-sm p-2 rounded-lg mb-3">
+            <div className="bg-warning/10 text-warning-foreground text-xs sm:text-sm p-2 rounded-lg mb-2 sm:mb-3">
               📝 {order.notes}
             </div>
           )}
@@ -144,16 +144,16 @@ export default function AdminOrders() {
           {/* Action Button */}
           {nextStatus && (
             <Button 
-              className="w-full h-12 text-lg"
+              className="w-full h-10 sm:h-12 text-sm sm:text-lg"
               onClick={() => handleAdvanceOrder(order)}
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
               ) : (
                 <>
-                  PRÓXIMO: {ORDER_STATUS_LABELS[nextStatus]}
-                  <ArrowRight className="h-5 w-5 ml-2" />
+                  <span className="truncate">PRÓXIMO: {ORDER_STATUS_LABELS[nextStatus]}</span>
+                  <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 ml-2 shrink-0" />
                 </>
               )}
             </Button>
@@ -164,14 +164,14 @@ export default function AdminOrders() {
   };
 
   const StatusTab = ({ status, icon: Icon, orders }: { status: OrderStatus, icon: React.ElementType, orders: InovaOrder[] }) => (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {orders.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Icon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p>Nenhum pedido {ORDER_STATUS_LABELS[status].toLowerCase()}</p>
+        <div className="text-center py-8 sm:py-12 text-muted-foreground">
+          <Icon className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 opacity-50" />
+          <p className="text-sm sm:text-base">Nenhum pedido {ORDER_STATUS_LABELS[status].toLowerCase()}</p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {orders.map((order) => (
             <OrderCard key={order.id} order={order} />
           ))}
@@ -181,42 +181,42 @@ export default function AdminOrders() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Gestão de Pedidos</h1>
-        <p className="text-muted-foreground">PDV em tempo real</p>
+        <h1 className="text-xl sm:text-2xl font-bold">Gestão de Pedidos</h1>
+        <p className="text-sm text-muted-foreground">PDV em tempo real</p>
       </div>
 
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid grid-cols-5 w-full h-auto">
-          <TabsTrigger value="pending" className="flex flex-col gap-1 py-3">
-            <Clock className="h-4 w-4" />
-            <span className="text-xs">Pendentes</span>
-            <Badge variant="secondary" className="text-xs">{ordersByStatus.pending.length}</Badge>
+        <TabsList className="grid grid-cols-5 w-full h-auto p-1">
+          <TabsTrigger value="pending" className="flex flex-col gap-0.5 sm:gap-1 py-2 sm:py-3 px-1">
+            <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="text-[10px] sm:text-xs hidden xs:inline">Pendentes</span>
+            <Badge variant="secondary" className="text-[10px] sm:text-xs px-1 sm:px-1.5">{ordersByStatus.pending.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="preparing" className="flex flex-col gap-1 py-3">
-            <ChefHat className="h-4 w-4" />
-            <span className="text-xs">Preparando</span>
-            <Badge variant="secondary" className="text-xs">{ordersByStatus.preparing.length}</Badge>
+          <TabsTrigger value="preparing" className="flex flex-col gap-0.5 sm:gap-1 py-2 sm:py-3 px-1">
+            <ChefHat className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="text-[10px] sm:text-xs hidden xs:inline">Preparando</span>
+            <Badge variant="secondary" className="text-[10px] sm:text-xs px-1 sm:px-1.5">{ordersByStatus.preparing.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="ready" className="flex flex-col gap-1 py-3">
-            <Package className="h-4 w-4" />
-            <span className="text-xs">Pronto</span>
-            <Badge variant="secondary" className="text-xs">{ordersByStatus.ready.length}</Badge>
+          <TabsTrigger value="ready" className="flex flex-col gap-0.5 sm:gap-1 py-2 sm:py-3 px-1">
+            <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="text-[10px] sm:text-xs hidden xs:inline">Pronto</span>
+            <Badge variant="secondary" className="text-[10px] sm:text-xs px-1 sm:px-1.5">{ordersByStatus.ready.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="out_for_delivery" className="flex flex-col gap-1 py-3">
-            <Truck className="h-4 w-4" />
-            <span className="text-xs">Entrega</span>
-            <Badge variant="secondary" className="text-xs">{ordersByStatus.out_for_delivery.length}</Badge>
+          <TabsTrigger value="out_for_delivery" className="flex flex-col gap-0.5 sm:gap-1 py-2 sm:py-3 px-1">
+            <Truck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="text-[10px] sm:text-xs hidden xs:inline">Entrega</span>
+            <Badge variant="secondary" className="text-[10px] sm:text-xs px-1 sm:px-1.5">{ordersByStatus.out_for_delivery.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="completed" className="flex flex-col gap-1 py-3">
-            <CheckCircle className="h-4 w-4" />
-            <span className="text-xs">Concluídos</span>
-            <Badge variant="secondary" className="text-xs">{ordersByStatus.completed.length}</Badge>
+          <TabsTrigger value="completed" className="flex flex-col gap-0.5 sm:gap-1 py-2 sm:py-3 px-1">
+            <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="text-[10px] sm:text-xs hidden xs:inline">Concluídos</span>
+            <Badge variant="secondary" className="text-[10px] sm:text-xs px-1 sm:px-1.5">{ordersByStatus.completed.length}</Badge>
           </TabsTrigger>
         </TabsList>
 
-        <div className="mt-6">
+        <div className="mt-4 sm:mt-6">
           <TabsContent value="pending">
             <StatusTab status="pending" icon={Clock} orders={ordersByStatus.pending} />
           </TabsContent>
