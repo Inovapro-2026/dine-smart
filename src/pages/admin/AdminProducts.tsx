@@ -234,7 +234,7 @@ export default function AdminProducts() {
 
       {/* Grid View */}
       {!isLoading && viewMode === 'grid' && (
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8">
           {filteredProducts.map((product) => (
             <Card 
               key={product.id} 
@@ -243,7 +243,7 @@ export default function AdminProducts() {
                 !product.is_active && "opacity-60"
               )}
             >
-              <div className="relative aspect-square overflow-hidden rounded-t-lg bg-secondary">
+              <div className="relative h-20 sm:h-24 overflow-hidden rounded-t-lg bg-secondary">
                 {product.image_url ? (
                   <img
                     src={product.image_url}
@@ -255,40 +255,38 @@ export default function AdminProducts() {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <ImageOff className="h-8 w-8 text-muted-foreground/30" />
+                    <ImageOff className="h-6 w-6 text-muted-foreground/30" />
                   </div>
                 )}
                 {!product.is_active && (
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <Badge variant="destructive" className="text-xs">
+                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5">
                       <EyeOff className="h-3 w-3 mr-1" />
                       Off
                     </Badge>
                   </div>
                 )}
-                <div className="absolute top-1.5 left-1.5">
+                <div className="absolute top-1 left-1">
                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shadow">
                     {product.category?.icon}
                   </Badge>
                 </div>
               </div>
 
-              <CardContent className="p-2.5">
-                <div className="mb-2">
-                  <h3 className="font-semibold line-clamp-1 text-sm">{product.name}</h3>
-                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+              <CardContent className="p-2">
+                <div className="mb-1.5">
+                  <h3 className="font-semibold line-clamp-1 text-xs">{product.name}</h3>
+                  <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
                     {product.description || 'Sem descrição'}
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-bold text-primary">{formatCurrency(product.price)}</p>
-                  <span className="text-[10px] text-muted-foreground">
-                    Est: {product.stock}
-                  </span>
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-xs font-bold text-primary">{formatCurrency(product.price)}</p>
+                  <span className="text-[10px] text-muted-foreground">Est: {product.stock}</span>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t">
+                <div className="flex items-center justify-between pt-1.5 border-t">
                   <Switch
                     checked={product.is_active}
                     onCheckedChange={() => handleToggleActive(product)}
