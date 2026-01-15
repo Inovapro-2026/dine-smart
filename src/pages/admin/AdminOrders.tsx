@@ -298,12 +298,6 @@ export default function AdminOrders() {
 
   return (
     <div className="admin-bg-animated min-h-screen -m-4 sm:-m-6 p-4 sm:p-6 relative">
-      {/* Floating particles */}
-      <div className="floating-particle" style={{ top: '10%', left: '5%', animationDelay: '0s' }} />
-      <div className="floating-particle" style={{ top: '20%', right: '10%', animationDelay: '1s' }} />
-      <div className="floating-particle" style={{ top: '60%', left: '15%', animationDelay: '2s' }} />
-      <div className="floating-particle" style={{ top: '80%', right: '20%', animationDelay: '3s' }} />
-
       <div className="relative z-10 space-y-5 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
