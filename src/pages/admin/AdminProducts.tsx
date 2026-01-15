@@ -110,7 +110,7 @@ export default function AdminProducts() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Produtos</h1>
-          <p className="text-muted-foreground">Gerencie seu cardápio completo</p>
+          <p className="text-muted-foreground">Gerencie seu cardápio</p>
         </div>
         <Button onClick={handleNewProduct} size="lg" className="shadow-lg">
           <Plus className="h-5 w-5 mr-2" />
