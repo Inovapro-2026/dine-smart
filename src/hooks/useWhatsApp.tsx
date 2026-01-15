@@ -28,6 +28,21 @@ export function useWhatsApp() {
     }
   };
 
+  const extractQrSrcFromHtml = (html: string): string | null => {
+    const srcMatch = html.match(/src\s*=\s*['\"]([^'\"]+)['\"]/i);
+    if (srcMatch?.[1]) return srcMatch[1];
+
+    const b64Match = html.match(/base64,([A-Za-z0-9+/=]+)\s*/i);
+    if (b64Match?.[1]) return `data:image/png;base64,${b64Match[1]}`;
+
+    const rawB64 = html.trim();
+    if (/^[A-Za-z0-9+/=]+$/.test(rawB64) && rawB64.length > 200) {
+      return `data:image/png;base64,${rawB64}`;
+    }
+
+    return null;
+  };
+
   const generateQRCode = async (): Promise<string | null> => {
     setIsLoading(true);
     try {
@@ -36,10 +51,32 @@ export function useWhatsApp() {
       });
       if (error) throw error;
 
-      const qr = data?.qr ?? null;
+      const qr = (data as any)?.qr ?? null;
       if (qr) {
         setQrCode(qr);
         return qr;
+      }
+
+      // If API says it's already connected, don't show an error.
+      const raw = (data as any)?.raw;
+      if (typeof raw === 'string' && raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          const msg = String(parsed?.message ?? '').toLowerCase();
+          if (parsed?.status === 'connected' || msg.includes('conect')) {
+            setIsConnected(true);
+            toast.success('WhatsApp já está conectado.');
+            return null;
+          }
+        } catch {
+          // not JSON
+        }
+
+        const extracted = extractQrSrcFromHtml(raw);
+        if (extracted) {
+          setQrCode(extracted);
+          return extracted;
+        }
       }
 
       toast.error('QR Code não retornou no formato esperado.');
