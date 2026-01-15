@@ -24,8 +24,21 @@ function json(data: unknown, status = 200) {
 }
 
 function extractQrSrc(html: string): string | null {
-  const m = html.match(/src\s*=\s*"([^"]+)"/i);
-  return m?.[1] ?? null;
+  // API may return: <img src="data:image/png;base64,..." /> or single quotes
+  const srcMatch = html.match(/src\s*=\s*['"]([^'"]+)['"]/i);
+  if (srcMatch?.[1]) return srcMatch[1];
+
+  // Fallback: sometimes returns only the base64 payload
+  const b64Match = html.match(/base64,([A-Za-z0-9+/=]+)\s*/i);
+  if (b64Match?.[1]) return `data:image/png;base64,${b64Match[1]}`;
+
+  // Fallback: raw base64 without prefix
+  const rawB64 = html.trim();
+  if (/^[A-Za-z0-9+/=]+$/.test(rawB64) && rawB64.length > 200) {
+    return `data:image/png;base64,${rawB64}`;
+  }
+
+  return null;
 }
 
 Deno.serve(async (req) => {
