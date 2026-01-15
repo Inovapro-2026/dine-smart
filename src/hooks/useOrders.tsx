@@ -99,12 +99,13 @@ export function useUpdateOrderStatus() {
 
   return useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: OrderStatus }) => {
+      // Use maybeSingle() to avoid PGRST116 when RLS prevents returning rows
       const { data, error } = await supabase
         .from('inovafood_orders')
         .update({ status })
         .eq('id', orderId)
-        .select()
-        .single();
+        .select('*')
+        .maybeSingle();
 
       if (error) {
         console.error('Error updating order status:', error);
