@@ -1,5 +1,5 @@
 // Supabase Edge Function: WhatsApp proxy with full menu bot
-// External API: ISA (Baileys)
+// External API: ISA (Baileys) or whatsapp-web.js
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -8,10 +8,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const API_BASE = 'http://148.230.76.60:3333';
+// API Base - pode ser ISA ou whatsapp-web.js
+const API_BASE = Deno.env.get('WHATSAPP_API_URL') || 'http://148.230.76.60:3333';
 const STORE_LINK = 'https://inovafood.inovapro.cloud/';
 
-type Action = 'status' | 'qr' | 'send' | 'webhook';
+type Action = 'status' | 'qr' | 'send' | 'webhook' | 'notify_order';
 
 type RequestBody = {
   action: Action;
@@ -20,10 +21,21 @@ type RequestBody = {
   from?: string;
   text?: string;
   isFirstMessage?: boolean;
+  // Para notify_order
+  orderId?: string;
+  customerPhone?: string;
+  customerName?: string;
+  orderTotal?: number;
+  orderItems?: Array<{ name: string; quantity: number }>;
+  orderStatus?: string;
 };
 
 interface StoreSettings {
   whatsapp_welcome_message: string;
+  whatsapp_preparing_message: string;
+  whatsapp_ready_message: string;
+  whatsapp_delivery_message: string;
+  whatsapp_completed_message: string;
   opening_hours: Record<string, { open: string; close: string }>;
 }
 
@@ -63,14 +75,26 @@ function extractQrSrc(html: string): string | null {
 
 async function sendWhatsAppMessage(number: string, message: string): Promise<boolean> {
   try {
-    const r = await fetch(`${API_BASE}/send`, {
+    // Tentar primeiro o formato do whatsapp-web.js
+    let response = await fetch(`${API_BASE}/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ number, message }),
+      body: JSON.stringify({ phone: number, message }),
     });
-    return r.ok;
+
+    if (!response.ok) {
+      // Tentar formato ISA
+      response = await fetch(`${API_BASE}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ number, message }),
+      });
+    }
+
+    console.log(`WhatsApp message sent to ${number}: ${response.ok}`);
+    return response.ok;
   } catch (e) {
-    console.error('Error sending message:', e);
+    console.error('Error sending WhatsApp message:', e);
     return false;
   }
 }
@@ -86,18 +110,26 @@ async function getStoreSettings(): Promise<StoreSettings> {
     const supabase = getSupabaseClient();
     const { data } = await supabase
       .from('store_settings')
-      .select('whatsapp_welcome_message, opening_hours')
+      .select('*')
       .limit(1)
       .maybeSingle();
 
     return {
       whatsapp_welcome_message: data?.whatsapp_welcome_message ?? getDefaultWelcome(),
+      whatsapp_preparing_message: data?.whatsapp_preparing_message ?? '🍳 *Preparando seu pedido!*\n\nSeu pedido está sendo preparado com carinho. Em breve ficará pronto!',
+      whatsapp_ready_message: data?.whatsapp_ready_message ?? '✅ *Pedido pronto!*\n\nSeu pedido está pronto para retirada/entrega!',
+      whatsapp_delivery_message: data?.whatsapp_delivery_message ?? '🛵 *Saiu para entrega!*\n\nSeu pedido está a caminho!',
+      whatsapp_completed_message: data?.whatsapp_completed_message ?? '🎉 *Pedido entregue!*\n\nObrigado por pedir no INOVAFOOD! Esperamos você em breve!',
       opening_hours: data?.opening_hours ?? getDefaultHours(),
     };
   } catch (e) {
     console.error('Error fetching settings:', e);
     return {
       whatsapp_welcome_message: getDefaultWelcome(),
+      whatsapp_preparing_message: '🍳 Preparando seu pedido!',
+      whatsapp_ready_message: '✅ Pedido pronto!',
+      whatsapp_delivery_message: '🛵 Saiu para entrega!',
+      whatsapp_completed_message: '🎉 Pedido entregue!',
       opening_hours: getDefaultHours(),
     };
   }
@@ -220,6 +252,24 @@ async function handleMenuOption(option: string, from: string, settings: StoreSet
   }
 }
 
+// Formatar mensagem de notificação de pedido
+function formatOrderNotification(
+  customerName: string,
+  orderId: string,
+  orderItems: Array<{ name: string; quantity: number }>,
+  orderTotal: number,
+  status: string
+): string {
+  const totalFormatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orderTotal);
+  const itemsList = orderItems.map(i => `  • ${i.quantity}x ${i.name}`).join('\n');
+  
+  if (status === 'pending' || status === 'new') {
+    return `🎉 *Pedido Recebido!*\n\nOlá, ${customerName}! 👋\n\nRecebemos seu pedido e já estamos preparando!\n\n📝 *Itens do Pedido:*\n${itemsList}\n\n💰 *Total:* ${totalFormatted}\n\n⏳ Aguarde, em breve você receberá atualizações sobre seu pedido.\n\n❤️ Obrigado por escolher o INOVAFOOD!`;
+  }
+  
+  return `📦 *Atualização do Pedido*\n\nOlá, ${customerName}!\n\n${STATUS_LABELS[status] || status}\n\n📝 Pedido: #${orderId.substring(0, 8)}\n💰 Total: ${totalFormatted}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
@@ -228,10 +278,17 @@ Deno.serve(async (req) => {
 
     if (!body?.action) return json({ error: 'Missing action' }, 400);
 
+    console.log(`Action received: ${body.action}`);
+
     if (body.action === 'status') {
-      const r = await fetch(`${API_BASE}/status`);
-      const data = await r.json().catch(() => ({}));
-      return json({ status: data.status ?? null });
+      try {
+        const r = await fetch(`${API_BASE}/status`, { signal: AbortSignal.timeout(5000) });
+        const data = await r.json().catch(() => ({}));
+        return json({ status: data.status ?? data.whatsapp ?? 'unknown' });
+      } catch (e) {
+        console.error('Status check failed:', e);
+        return json({ status: 'offline', error: 'Could not reach WhatsApp API' });
+      }
     }
 
     if (body.action === 'qr') {
@@ -246,17 +303,62 @@ Deno.serve(async (req) => {
       const message = (body.message ?? '').toString();
       if (!number || !message) return json({ error: 'Missing number/message' }, 400);
 
-      const r = await fetch(`${API_BASE}/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ number, message }),
-      });
-
-      const data = await r.json().catch(() => ({}));
-      return json(data, r.ok ? 200 : 400);
+      const sent = await sendWhatsAppMessage(number, message);
+      return json({ success: sent, message: sent ? 'Mensagem enviada' : 'Falha ao enviar' }, sent ? 200 : 500);
     }
 
-    // Webhook: called by ISA when receiving a message
+    // Notificar cliente sobre pedido (chamado após criar pedido)
+    if (body.action === 'notify_order') {
+      const { customerPhone, customerName, orderId, orderItems, orderTotal, orderStatus } = body;
+      
+      if (!customerPhone) {
+        return json({ error: 'Missing customerPhone' }, 400);
+      }
+
+      console.log(`Notifying order ${orderId} to ${customerPhone}`);
+
+      const settings = await getStoreSettings();
+      
+      let message: string;
+      
+      // Usar mensagem personalizada ou gerar automática
+      if (orderStatus === 'pending' || orderStatus === 'new') {
+        message = formatOrderNotification(
+          customerName || 'Cliente',
+          orderId || '',
+          orderItems || [],
+          orderTotal || 0,
+          'pending'
+        );
+      } else if (orderStatus === 'preparing') {
+        message = settings.whatsapp_preparing_message.replace('{nome}', customerName || 'Cliente');
+      } else if (orderStatus === 'ready') {
+        message = settings.whatsapp_ready_message.replace('{nome}', customerName || 'Cliente');
+      } else if (orderStatus === 'out_for_delivery') {
+        message = settings.whatsapp_delivery_message.replace('{nome}', customerName || 'Cliente');
+      } else if (orderStatus === 'completed') {
+        message = settings.whatsapp_completed_message.replace('{nome}', customerName || 'Cliente');
+      } else {
+        message = formatOrderNotification(
+          customerName || 'Cliente',
+          orderId || '',
+          orderItems || [],
+          orderTotal || 0,
+          orderStatus || 'pending'
+        );
+      }
+
+      const sent = await sendWhatsAppMessage(customerPhone, message);
+      
+      return json({ 
+        success: sent, 
+        message: sent ? 'Notificação enviada' : 'Falha ao enviar notificação',
+        phone: customerPhone,
+        status: orderStatus
+      });
+    }
+
+    // Webhook: called by WhatsApp bot when receiving a message
     if (body.action === 'webhook') {
       const from = (body.from ?? body.number ?? '').toString();
       const text = (body.text ?? body.message ?? '').toString().trim();
@@ -281,20 +383,22 @@ Deno.serve(async (req) => {
         responseMessage = await handleMenuOption(text, from, settings);
       }
       
+      // Enviar resposta de volta via API do WhatsApp
       const sent = await sendWhatsAppMessage(from, responseMessage);
       console.log(`Response sent to ${from}: ${sent}`);
       
       return json({ 
+        success: sent,
+        reply: responseMessage, // Para compatibilidade com whatsapp-web.js
         status: sent ? 'success' : 'failed',
         action: 'response_sent',
-        to: from,
-        message: responseMessage.substring(0, 100) + '...'
+        to: from
       });
     }
 
     return json({ error: 'Invalid action' }, 400);
   } catch (e) {
     console.error('whatsapp-proxy error', e);
-    return json({ error: 'Internal error' }, 500);
+    return json({ error: 'Internal error', details: String(e) }, 500);
   }
 });
