@@ -1,7 +1,7 @@
 import { InovaCategory } from '@/types/inovafood';
 import { cn } from '@/lib/utils';
 import { useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flame, Coffee, Pizza, IceCream, Salad, Fish, UtensilsCrossed, Beef, Cake, Wine, Sandwich, Soup } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface CategoryCarouselProps {
@@ -10,18 +10,22 @@ interface CategoryCarouselProps {
   onSelectCategory: (categoryId: string | null) => void;
 }
 
-const categoryIcons: Record<string, string> = {
-  'lanches': '🍔',
-  'bebidas': '🥤',
-  'pizzas': '🍕',
-  'sobremesas': '🍰',
-  'acai': '🍇',
-  'japonesa': '🍣',
-  'brasileira': '🍛',
-  'italiana': '🍝',
-  'saudavel': '🥗',
-  'promocoes': '🔥',
+const categoryIcons: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
+  'lanches': { icon: Sandwich, color: 'text-amber-600', bg: 'bg-amber-100' },
+  'bebidas': { icon: Coffee, color: 'text-sky-600', bg: 'bg-sky-100' },
+  'pizzas': { icon: Pizza, color: 'text-orange-600', bg: 'bg-orange-100' },
+  'sobremesas': { icon: Cake, color: 'text-pink-600', bg: 'bg-pink-100' },
+  'acai': { icon: IceCream, color: 'text-purple-600', bg: 'bg-purple-100' },
+  'japonesa': { icon: Fish, color: 'text-rose-600', bg: 'bg-rose-100' },
+  'brasileira': { icon: Soup, color: 'text-yellow-600', bg: 'bg-yellow-100' },
+  'italiana': { icon: UtensilsCrossed, color: 'text-green-600', bg: 'bg-green-100' },
+  'saudavel': { icon: Salad, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+  'promocoes': { icon: Flame, color: 'text-red-600', bg: 'bg-red-100' },
+  'carnes': { icon: Beef, color: 'text-red-700', bg: 'bg-red-100' },
+  'drinks': { icon: Wine, color: 'text-violet-600', bg: 'bg-violet-100' },
 };
+
+const defaultCategory = { icon: UtensilsCrossed, color: 'text-muted-foreground', bg: 'bg-muted' };
 
 export function CategoryCarousel({ 
   categories, 
@@ -41,12 +45,13 @@ export function CategoryCarousel({
   };
 
   const allCategories = [
-    { id: null, name: 'Todos', slug: 'todos', icon: '🍽️' },
-    ...categories.map(cat => ({
-      ...cat,
-      icon: cat.icon || categoryIcons[cat.slug] || '🍴'
-    }))
+    { id: null, name: 'Todos', slug: 'todos' },
+    ...categories
   ];
+
+  const getCategoryStyle = (slug: string) => {
+    return categoryIcons[slug] || defaultCategory;
+  };
 
   return (
     <div className="relative group">
@@ -72,37 +77,44 @@ export function CategoryCarousel({
       {/* Categories */}
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide scroll-smooth px-1"
+        className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide scroll-smooth px-1"
       >
         {allCategories.map((category) => {
           const isSelected = selectedCategory === category.id;
+          const style = getCategoryStyle(category.slug);
+          const IconComponent = style.icon;
           
           return (
             <button
               key={category.id || 'all'}
               onClick={() => onSelectCategory(category.id)}
               className={cn(
-                'flex flex-col items-center gap-2 min-w-[72px] py-2 transition-all',
+                'flex flex-col items-center gap-2 min-w-[80px] py-2 transition-all group/item',
                 isSelected ? 'scale-105' : 'hover:scale-105'
               )}
             >
               {/* Icon circle */}
               <div
                 className={cn(
-                  'w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all',
+                  'w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-sm',
                   isSelected
-                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
-                    : 'bg-secondary hover:bg-secondary/80'
+                    ? 'bg-primary shadow-lg shadow-primary/30 ring-2 ring-primary ring-offset-2'
+                    : cn(style.bg, 'group-hover/item:shadow-md')
                 )}
               >
-                {category.icon}
+                <IconComponent 
+                  className={cn(
+                    'h-7 w-7 transition-colors',
+                    isSelected ? 'text-primary-foreground' : style.color
+                  )} 
+                />
               </div>
               
               {/* Label */}
               <span
                 className={cn(
-                  'text-xs font-medium text-center line-clamp-1',
-                  isSelected ? 'text-primary' : 'text-muted-foreground'
+                  'text-xs font-medium text-center line-clamp-1 transition-colors',
+                  isSelected ? 'text-primary font-semibold' : 'text-muted-foreground group-hover/item:text-foreground'
                 )}
               >
                 {category.name}

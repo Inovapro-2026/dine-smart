@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useProducts, useCategories } from '@/hooks/useProducts';
 import { StoreBanner } from '@/components/store/StoreBanner';
+import { PromoBanner } from '@/components/store/PromoBanner';
 import { CategoryCarousel } from '@/components/store/CategoryCarousel';
 import { ProductCard } from '@/components/store/ProductCard';
 import { CartDrawer } from '@/components/store/CartDrawer';
@@ -69,14 +70,17 @@ export default function StorePage() {
         onSearchChange={setSearchQuery}
       />
 
+      {/* Banner de promoções */}
+      <PromoBanner />
+
       {/* Categorias */}
-      <section className="bg-card border-b sticky top-0 z-20">
+      <section className="bg-card border-b sticky top-0 z-20 mt-4">
         <div className="container py-4">
           {categoriesLoading ? (
             <div className="flex gap-4 overflow-hidden">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="flex flex-col items-center gap-2">
-                  <Skeleton className="w-16 h-16 rounded-full" />
+                  <Skeleton className="w-16 h-16 rounded-2xl" />
                   <Skeleton className="h-3 w-12" />
                 </div>
               ))}
