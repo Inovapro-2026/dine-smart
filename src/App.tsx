@@ -11,6 +11,7 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminBanners from "./pages/admin/AdminBanners";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="products" element={<AdminProducts />} />
+            <Route path="banners" element={<AdminBanners />} />
             <Route path="whatsapp" element={<AdminWhatsApp />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
