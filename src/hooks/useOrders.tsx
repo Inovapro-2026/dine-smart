@@ -77,6 +77,31 @@ export function useCreateOrder() {
         throw error;
       }
 
+      // Enviar notificação WhatsApp para o cliente
+      try {
+        const orderItems = data.items.map(item => ({
+          name: item.product.name,
+          quantity: item.quantity
+        }));
+
+        await supabase.functions.invoke('whatsapp-proxy', {
+          body: {
+            action: 'notify_order',
+            customerPhone: data.customer_phone,
+            customerName: data.customer_name,
+            orderId: order.id,
+            orderItems,
+            orderTotal: data.total,
+            orderStatus: 'pending'
+          }
+        });
+        
+        console.log('WhatsApp notification sent for order:', order.id);
+      } catch (whatsappError) {
+        // Não falha o pedido se o WhatsApp falhar
+        console.error('Failed to send WhatsApp notification:', whatsappError);
+      }
+
       return {
         ...order,
         items: (order.items as unknown) as CartItem[],
@@ -98,7 +123,12 @@ export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ orderId, status }: { orderId: string; status: OrderStatus }) => {
+    mutationFn: async ({ orderId, status, customerPhone, customerName }: { 
+      orderId: string; 
+      status: OrderStatus;
+      customerPhone?: string;
+      customerName?: string;
+    }) => {
       // Use maybeSingle() to avoid PGRST116 when RLS prevents returning rows
       const { data, error } = await supabase
         .from('inovafood_orders')
@@ -110,6 +140,28 @@ export function useUpdateOrderStatus() {
       if (error) {
         console.error('Error updating order status:', error);
         throw error;
+      }
+
+      // Enviar notificação WhatsApp se tivermos o telefone
+      const phone = customerPhone || data?.customer_phone;
+      const name = customerName || data?.customer_name;
+      
+      if (phone && status !== 'cancelled') {
+        try {
+          await supabase.functions.invoke('whatsapp-proxy', {
+            body: {
+              action: 'notify_order',
+              customerPhone: phone,
+              customerName: name,
+              orderId,
+              orderTotal: data?.total || 0,
+              orderStatus: status
+            }
+          });
+          console.log('WhatsApp status notification sent:', status);
+        } catch (whatsappError) {
+          console.error('Failed to send WhatsApp status notification:', whatsappError);
+        }
       }
 
       return data;
