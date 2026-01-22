@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Truck, Percent, Users, Clock, Gift, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -9,7 +9,8 @@ interface PromoSlide {
   subtitle: string;
   bgColor: string;
   textColor: string;
-  image?: string;
+  icon: React.ElementType;
+  iconBg: string;
   badge?: string;
 }
 
@@ -18,33 +19,61 @@ const promoSlides: PromoSlide[] = [
     id: '1',
     title: 'Frete Grátis',
     subtitle: 'Em pedidos acima de R$ 50',
-    bgColor: 'from-primary to-primary/80',
+    bgColor: 'bg-gradient-to-r from-primary via-primary to-primary/90',
     textColor: 'text-primary-foreground',
+    icon: Truck,
+    iconBg: 'bg-white/20',
     badge: 'HOJE',
   },
   {
     id: '2',
     title: '20% OFF',
     subtitle: 'Em todos os lanches',
-    bgColor: 'from-amber-500 to-orange-600',
+    bgColor: 'bg-gradient-to-r from-amber-500 via-orange-500 to-orange-600',
     textColor: 'text-white',
+    icon: Percent,
+    iconBg: 'bg-white/20',
     badge: 'ESPECIAL',
   },
   {
     id: '3',
     title: 'Combo Família',
     subtitle: 'A partir de R$ 49,90',
-    bgColor: 'from-emerald-500 to-teal-600',
+    bgColor: 'bg-gradient-to-r from-emerald-500 via-teal-500 to-teal-600',
     textColor: 'text-white',
+    icon: Users,
+    iconBg: 'bg-white/20',
     badge: 'NOVO',
   },
   {
     id: '4',
     title: 'Happy Hour',
     subtitle: 'Bebidas com 30% OFF até 18h',
-    bgColor: 'from-purple-500 to-indigo-600',
+    bgColor: 'bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-600',
     textColor: 'text-white',
+    icon: Clock,
+    iconBg: 'bg-white/20',
     badge: 'DIÁRIO',
+  },
+  {
+    id: '5',
+    title: 'Primeira Compra',
+    subtitle: 'Ganhe R$15 de desconto',
+    bgColor: 'bg-gradient-to-r from-pink-500 via-rose-500 to-red-500',
+    textColor: 'text-white',
+    icon: Gift,
+    iconBg: 'bg-white/20',
+    badge: 'NOVOS',
+  },
+  {
+    id: '6',
+    title: 'Super Promoção',
+    subtitle: 'Itens selecionados pela metade do preço',
+    bgColor: 'bg-gradient-to-r from-red-500 via-red-600 to-orange-500',
+    textColor: 'text-white',
+    icon: Flame,
+    iconBg: 'bg-white/20',
+    badge: 'IMPERDÍVEL',
   },
 ];
 
@@ -78,31 +107,36 @@ export function PromoBanner() {
         className="flex transition-transform duration-500 ease-out"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
-        {promoSlides.map((slide) => (
-          <div
-            key={slide.id}
-            className={cn(
-              'min-w-full h-32 sm:h-40 rounded-2xl bg-gradient-to-r p-6 flex items-center justify-between',
-              slide.bgColor
-            )}
-          >
-            <div className={cn('space-y-1', slide.textColor)}>
-              {slide.badge && (
-                <span className="inline-block bg-white/20 backdrop-blur-sm text-xs font-bold px-2 py-0.5 rounded-full mb-2">
-                  {slide.badge}
-                </span>
+        {promoSlides.map((slide) => {
+          const IconComponent = slide.icon;
+          return (
+            <div
+              key={slide.id}
+              className={cn(
+                'min-w-full h-32 sm:h-40 rounded-2xl p-6 flex items-center justify-between cursor-pointer hover:opacity-95 transition-opacity',
+                slide.bgColor
               )}
-              <h3 className="text-2xl sm:text-3xl font-bold">{slide.title}</h3>
-              <p className="text-sm sm:text-base opacity-90">{slide.subtitle}</p>
+            >
+              <div className={cn('space-y-1 flex-1', slide.textColor)}>
+                {slide.badge && (
+                  <span className="inline-block bg-white/20 backdrop-blur-sm text-[10px] font-bold px-2.5 py-1 rounded-full mb-2 tracking-wide">
+                    {slide.badge}
+                  </span>
+                )}
+                <h3 className="text-2xl sm:text-3xl font-bold tracking-tight">{slide.title}</h3>
+                <p className="text-sm sm:text-base opacity-90">{slide.subtitle}</p>
+              </div>
+              
+              {/* Icon illustration */}
+              <div className={cn(
+                'hidden sm:flex items-center justify-center w-24 h-24 rounded-full',
+                slide.iconBg
+              )}>
+                <IconComponent className="w-12 h-12 text-white" strokeWidth={1.5} />
+              </div>
             </div>
-            
-            {/* Decorative elements */}
-            <div className="hidden sm:flex items-center gap-2 opacity-30">
-              <div className="w-20 h-20 rounded-full border-4 border-current" />
-              <div className="w-12 h-12 rounded-full bg-current/20" />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Navigation Buttons */}
