@@ -1,10 +1,50 @@
 import { InovaProduct } from '@/types/inovafood';
 import { useCart } from '@/hooks/useCart';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Percent } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { useMemo } from 'react';
 
 interface ProductCardProps {
   product: InovaProduct;
+}
+
+// Simula produtos em oferta (em produção viria do banco)
+const PRODUCTS_ON_SALE: Record<string, number> = {
+  // IDs de produtos com desconto (percentual)
+};
+
+// Função para determinar se produto tem desconto baseado no nome/categoria
+function getProductDiscount(product: InovaProduct): number | null {
+  const name = product.name.toLowerCase();
+  const categorySlug = product.category?.slug?.toLowerCase() || '';
+  
+  // Produtos com "combo" ou "promocao" no nome
+  if (name.includes('combo') || name.includes('promoção') || name.includes('oferta')) {
+    return 15;
+  }
+  
+  // Lanches tem 10% off
+  if (categorySlug === 'lanches' || name.includes('hamburguer') || name.includes('burger')) {
+    return 10;
+  }
+  
+  // Bebidas grandes
+  if (name.includes('2l') || name.includes('família')) {
+    return 20;
+  }
+  
+  // Sobremesas
+  if (categorySlug === 'sobremesas' || name.includes('sorvete') || name.includes('açaí')) {
+    return 5;
+  }
+  
+  // Verificar ID específico
+  if (PRODUCTS_ON_SALE[product.id]) {
+    return PRODUCTS_ON_SALE[product.id];
+  }
+  
+  return null;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
@@ -12,6 +52,10 @@ export function ProductCard({ product }: ProductCardProps) {
   
   const itemInCart = items.find((item) => item.product.id === product.id);
   const quantity = itemInCart?.quantity || 0;
+  
+  const discount = useMemo(() => getProductDiscount(product), [product]);
+  const originalPrice = product.price;
+  const finalPrice = discount ? originalPrice * (1 - discount / 100) : originalPrice;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -21,7 +65,15 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="group bg-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 hover:shadow-xl transition-all duration-300 animate-fade-in">
+    <div className="group bg-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 hover:shadow-xl transition-all duration-300 animate-fade-in relative">
+      {/* Badge de desconto */}
+      {discount && (
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+          <Percent className="h-3 w-3" />
+          {discount}% OFF
+        </div>
+      )}
+      
       <div className="flex h-full">
         {/* Informações do produto */}
         <div className="flex-1 p-4 flex flex-col justify-between">
@@ -36,36 +88,57 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
 
           <div className="flex items-center justify-between gap-2">
-            <span className="text-lg font-bold text-primary">
-              {formatPrice(product.price)}
-            </span>
+            <div className="flex flex-col">
+              {discount ? (
+                <>
+                  <span className="text-xs text-muted-foreground line-through">
+                    {formatPrice(originalPrice)}
+                  </span>
+                  <span className="text-lg font-bold text-green-600">
+                    {formatPrice(finalPrice)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-lg font-bold text-primary">
+                  {formatPrice(originalPrice)}
+                </span>
+              )}
+            </div>
 
             {quantity === 0 ? (
               <Button
                 size="sm"
-                className="rounded-full h-9 px-4 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+                className={cn(
+                  "rounded-full h-9 px-4 shadow-lg",
+                  discount 
+                    ? "bg-green-600 hover:bg-green-700 shadow-green-600/20" 
+                    : "bg-primary hover:bg-primary/90 shadow-primary/20"
+                )}
                 onClick={() => addItem(product)}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Adicionar
               </Button>
             ) : (
-              <div className="flex items-center gap-2 bg-primary rounded-full px-1 py-1">
+              <div className={cn(
+                "flex items-center gap-2 rounded-full px-1 py-1",
+                discount ? "bg-green-600" : "bg-primary"
+              )}>
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-7 w-7 rounded-full text-primary-foreground hover:bg-primary-foreground/20"
+                  className="h-7 w-7 rounded-full text-white hover:bg-white/20"
                   onClick={() => removeItem(product.id)}
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
-                <span className="text-primary-foreground font-bold min-w-[20px] text-center">
+                <span className="text-white font-bold min-w-[20px] text-center">
                   {quantity}
                 </span>
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-7 w-7 rounded-full text-primary-foreground hover:bg-primary-foreground/20"
+                  className="h-7 w-7 rounded-full text-white hover:bg-white/20"
                   onClick={() => addItem(product)}
                 >
                   <Plus className="h-4 w-4" />
@@ -86,7 +159,10 @@ export function ProductCard({ product }: ProductCardProps) {
           
           {/* Badge de quantidade */}
           {quantity > 0 && (
-            <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
+            <div className={cn(
+              "absolute -top-2 -right-2 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg",
+              discount ? "bg-green-600" : "bg-primary"
+            )}>
               {quantity}
             </div>
           )}
