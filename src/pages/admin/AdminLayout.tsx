@@ -8,7 +8,8 @@ import {
   MessageSquare,
   LogOut,
   Menu,
-  X
+  X,
+  Image
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -17,6 +18,7 @@ const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
   { icon: ShoppingBag, label: 'Pedidos', path: '/admin/orders' },
   { icon: Package, label: 'Produtos', path: '/admin/products' },
+  { icon: Image, label: 'Banners', path: '/admin/banners' },
   { icon: MessageSquare, label: 'WhatsApp', path: '/admin/whatsapp' },
   { icon: Settings, label: 'Configurações', path: '/admin/settings' },
 ];
